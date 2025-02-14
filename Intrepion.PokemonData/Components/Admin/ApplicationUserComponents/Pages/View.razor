@@ -1,0 +1,199 @@
+@page "/admin/application-user/view/{ApplicationUserId:guid}"
+@rendermode InteractiveServer
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject EditSuccess EditSuccessState
+
+<PageTitle>Application User View</PageTitle>
+
+@if (NotFound && !Loading)
+{
+  <div class="alert alert-warning">Application User with that id doesn't exist.</div>
+}
+else
+{
+  @if (ApplicationUser is null || Loading)
+  {
+    <div class="alert alert-info">Loading...</div>
+  }
+  else
+  {
+    <h1>@ApplicationUser.Id</h1>
+    <br />
+    @if (EditSuccess)
+    {
+      <div class="alert alert-success">Successfully updated the Application User.</div>
+    }
+    <hr />
+    <h2>Id</h2>
+    <br />
+    <h3>@ApplicationUser.Id</h3>
+    <br />
+    <h2>Application User Roles</h2>
+    <br />
+    <h3>
+      @{
+        var first = true;
+        foreach (var applicationUserRole in ApplicationUser.ApplicationUserRoles)
+        {
+          if (first)
+          {
+            first = false;
+          }
+          else
+          {
+            <span>, </span>
+          }
+          <span>@applicationUserRole?.ApplicationRole?.Name</span>
+        }
+      }
+    </h3>
+    <br />
+    <h2>Email</h2>
+    <br />
+    <h3>@ApplicationUser.Email</h3>
+    <br />
+    <h2>Phone Number</h2>
+    <br />
+    <h3>@ApplicationUser.PhoneNumber</h3>
+    <br />
+    <h2>UserName</h2>
+    <br />
+    <h3>@ApplicationUser.UserName</h3>
+    <br />
+    <a class="btn btn-primary" title="Go Back" href="admin/application-user">
+      Back to Grid
+    </a>
+    <span>&nbsp;</span>
+    @if (!Deleted)
+    {
+      <a class="btn btn-primary" href="admin/application-user/edit/@ApplicationUser.Id" title="Edit">Edit</a>
+
+      <span>&nbsp;</span>
+      @if (!ShowConfirmation)
+      {
+        <button class="btn btn-danger" @onclick="@(() => { ShowConfirmation = true; EditSuccess = false; })">Delete</button>
+      }
+      else
+      {
+        <br />
+        <br />
+        <DeletePrompt Confirmation="@(async result => await ConfirmAsync(result))" />
+      }
+    }
+    else
+    {
+      <div class="btn btn-danger">🚫 This item has been deleted.</div>
+    }
+  }
+}
+
+@code {
+  private bool Loading;
+
+  [Parameter]
+  public Guid ApplicationUserId { get; set; }
+
+  private Guid _lastApplicationUserId;
+
+  [Parameter]
+  public bool EditSuccess { get; set; }
+
+  private ApplicationUser? ApplicationUser { get; set; }
+
+  private bool NotFound = false;
+
+  private bool ShowConfirmation = false;
+
+  private bool Deleted = false;
+
+  protected override async Task OnParametersSetAsync()
+  {
+    if (_lastApplicationUserId != ApplicationUserId)
+    {
+      EditSuccess = EditSuccessState.Success;
+      EditSuccessState.Success = false;
+      _lastApplicationUserId = ApplicationUserId;
+      await LoadApplicationUserAsync();
+    }
+  }
+
+  private async Task ConfirmAsync(bool result)
+  {
+    if (result)
+    {
+      await DeleteAsync();
+    }
+    else
+    {
+      ShowConfirmation = false;
+      EditSuccess = false;
+    }
+  }
+
+  private async Task LoadApplicationUserAsync()
+  {
+    if (Loading)
+    {
+      return;
+    }
+
+    NotFound = false;
+    ApplicationUser = null;
+
+    Loading = true;
+
+    using var context = DbFactory.CreateDbContext();
+
+    if (context.Users is not null)
+    {
+      ApplicationUser = await context.Users
+        .Include(x => x.ApplicationUserRoles)
+        .ThenInclude(x => x.ApplicationRole)
+        .AsNoTracking()
+        .SingleOrDefaultAsync(
+          x => x.Id == ApplicationUserId);
+
+      if (ApplicationUser is null)
+      {
+        NotFound = true;
+      }
+    }
+
+    Loading = false;
+  }
+
+  private async Task DeleteAsync()
+  {
+    if (Loading)
+    {
+      return;
+    }
+
+    Loading = true;
+    using var context = DbFactory?.CreateDbContext();
+
+    if (context?.Users is not null)
+    {
+      var applicationUser = await context.Users
+        .SingleOrDefaultAsync(x => x.Id == ApplicationUserId);
+
+      if (applicationUser is not null)
+      {
+        context.Users?.Remove(applicationUser);
+        await context.SaveChangesAsync();
+        Loading = false;
+        Deleted = true;
+      }
+      else
+      {
+        Loading = false;
+        await LoadApplicationUserAsync();
+      }
+    }
+    else
+    {
+      Loading = false;
+      await LoadApplicationUserAsync();
+    }
+  }
+}

@@ -1,0 +1,96 @@
+@implements IDisposable
+
+@inject NavigationManager NavigationManager
+
+<nav class="navbar navbar-expand-lg">
+  <div class="container-fluid">
+    <a class="navbar-brand" href="#">Intrepion.PokemonData</a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarText" aria-controls="navbarText" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse" id="navbarText">
+      <ul class="nav nav-pills me-auto mb-2 mb-lg-0">
+        <li class="nav-item">
+          <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+            Home
+          </NavLink>
+        </li>
+        <li class="nav-item">
+          <NavLink class="nav-link" href="counter">
+            Counter
+          </NavLink>
+        </li>
+        <li class="nav-item">
+          <NavLink class="nav-link" href="weather">
+            Weather
+          </NavLink>
+        </li>
+        <li class="nav-item">
+          <NavLink class="nav-link" href="auth">
+            Protected
+          </NavLink>
+        </li>
+      </ul>
+      <AuthorizeView>
+        <Authorized>
+          <ul class="nav nav-pills mb-2 mb-lg-0">
+            <li class="nav-item">
+              <NavLink class="nav-link" href="admin">
+                Admin
+              </NavLink>
+            </li>
+            <li class="nav-item">
+              <NavLink class="nav-link" href="Account/Manage">
+                @context.User.Identity?.Name
+              </NavLink>
+            </li>
+            <li class="nav-item">
+              <form action="Account/Logout" method="post">
+                <AntiforgeryToken />
+                <input type="hidden" name="ReturnUrl" value="@currentUrl" />
+                <button type="submit" class="btn btn-light">
+                  Logout
+                </button>
+              </form>
+            </li>
+          </ul>
+        </Authorized>
+        <NotAuthorized>
+          <ul class="nav nav-pills mb-2 mb-lg-0">
+            <li class="nav-item">
+              <NavLink class="nav-link" href="Account/Register">
+                Register
+              </NavLink>
+            </li>
+            <li class="nav-item">
+              <NavLink class="nav-link" href="Account/Login">
+                Login
+              </NavLink>
+            </li>
+          </ul>
+        </NotAuthorized>
+      </AuthorizeView>
+    </div>
+  </div>
+</nav>
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

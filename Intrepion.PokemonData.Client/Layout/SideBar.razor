@@ -1,0 +1,52 @@
+@implements IDisposable
+
+@inject NavigationManager NavigationManager
+
+<ul class="nav nav-pills flex-column mb-sm-auto mb-0 align-items-center align-items-sm-start">
+  <li class="nav-item">
+    <NavLink class="nav-link" data-testid="applicationRoleNavLink" href="admin/application-role">
+      Application Roles
+    </NavLink>
+  </li>
+  <li class="nav-item">
+    <NavLink class="nav-link" data-testid="applicationUserNavLink" href="admin/application-user">
+      Application Users
+    </NavLink>
+  </li>
+
+  <li class="nav-item">
+        <NavLink class="nav-link" data-testid="companyNavLink" href="admin/company">
+          Companies
+        </NavLink>
+ </li>
+
+      <li class="nav-item">
+        <NavLink class="nav-link" data-testid="gameConsoleNavLink" href="admin/game-console">
+          Game Consoles
+        </NavLink>
+ </li>
+
+      @* NavMenuLinkCodePlaceholder *@
+
+</ul>
+
+@code {
+    private string? currentUrl;
+
+    protected override void OnInitialized()
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
+        NavigationManager.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
+        StateHasChanged();
+    }
+
+    public void Dispose()
+    {
+        NavigationManager.LocationChanged -= OnLocationChanged;
+    }
+}

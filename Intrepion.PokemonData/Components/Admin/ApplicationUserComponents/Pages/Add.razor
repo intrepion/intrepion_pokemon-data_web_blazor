@@ -1,0 +1,85 @@
+@page "/admin/application-user/add"
+@rendermode InteractiveServer
+@using Microsoft.EntityFrameworkCore
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Application User Add</PageTitle>
+
+@if (ApplicationUser is not null)
+{
+  <ApplicationUserForm Busy="Busy" 
+         ApplicationUser="ApplicationUser" 
+         IsAdd="true"
+         CancelRequest="Cancel"
+         ValidationResult="@(async (success) => await ValidationResultAsync(success))" />
+}
+@if (Success)
+{
+  <br />
+  <div class="alert alert-success">The Application Role was successfully added.</div>
+}
+@if (Error)
+{
+  <br />
+  <div class="alert alert-danger">Failed to add the Application Role (@ErrorMessage).</div>
+}
+
+@code {
+  private ApplicationUser? ApplicationUser { get; set; }
+
+  private bool Busy;
+
+  private bool Success;
+
+  private bool Error;
+
+  private string ErrorMessage = string.Empty;
+
+  protected override void OnInitialized()
+  {
+    ApplicationUser = new();
+  }
+
+  private async Task ValidationResultAsync(bool success)
+  {
+    if (Busy)
+    {
+      return;
+    }
+
+    if (!success)
+    {
+      Success = false;
+      Error = false;
+      return;
+    }
+
+    Busy = true;
+
+    using var context = DbFactory.CreateDbContext();
+
+    if (ApplicationUser is not null)
+    {
+      context.Users?.Add(ApplicationUser);
+    }
+
+    try
+    {
+      await context.SaveChangesAsync();
+      Success = true;
+      Error = false;
+
+      Navigation.NavigateTo($"/admin/application-user/view/{ApplicationUser?.Id}");
+    }
+    catch (Exception ex)
+    {
+      Success = false;
+      Error = true;
+      ErrorMessage = ex.Message;
+      Busy = false;
+    }
+  }
+
+  private void Cancel() => Navigation.NavigateTo($"/admin/application-user");
+}
