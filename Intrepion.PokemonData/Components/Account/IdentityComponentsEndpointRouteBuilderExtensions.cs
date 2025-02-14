@@ -1,8 +1,8 @@
 ﻿using System.Security.Claims;
 using System.Text.Json;
+using Intrepion.PokemonData.BusinessLogic.Entities;
 using Intrepion.PokemonData.Components.Account.Pages;
 using Intrepion.PokemonData.Components.Account.Pages.Manage;
-using Intrepion.PokemonData.Data;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;

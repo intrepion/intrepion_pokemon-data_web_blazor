@@ -1,0 +1,82 @@
+@page "/admin/game-console"
+@rendermode InteractiveServer
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Game Console Home</PageTitle>
+
+<h1>Game Console Home</h1>
+<h6><a href="/admin/game-console/add">Create New</a></h6>
+
+<div class="container-fluid">
+  <table class="table table-hover table-primary table-striped">
+    <thead>
+      <tr>
+        <th>Actions</th>
+        <th>Company</th>
+        <th>Is Test?</th>
+        <th>Name</th>
+        @* TableHeaderCodePlaceholder *@
+      </tr>
+    </thead>
+    <tbody>
+      @if (gameConsoles is not null)
+      {
+        @foreach (var gameConsole in gameConsoles)
+        {
+          <tr>
+            <td>
+              <div class="btn-group">
+                <a class="btn btn-primary btn-sm btn-info" href="/admin/game-console/view/@gameConsole.Id" title="View">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a class="btn btn-primary btn-sm" href="/admin/game-console/edit/@gameConsole.Id" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </div>
+            </td>
+            <td>@gameConsole?.Company?.Name</td>
+            <td>
+              @if (gameConsole.IsTest)
+              {
+                <span class="badge bg-success">Yes</span>
+              }
+              else
+              {
+                <span class="badge bg-warning text-dark">No</span>
+              }
+            </td>
+            <td>@gameConsole?.Name</td>
+            @* TableRowCodePlaceholder *@
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@code {
+  private ICollection<GameConsole>? gameConsoles { get; set; }
+
+  protected override async Task OnParametersSetAsync()
+  {
+    await ReloadAsync();
+  }
+
+  private async Task ReloadAsync()
+  {
+    gameConsoles = new List<GameConsole>();
+
+    using var context = DbFactory.CreateDbContext();
+    var query = context.GameConsoles?.AsQueryable();
+
+    if (query is not null)
+    {
+      gameConsoles = await query
+        .Include(x => x.Company)
+        @* QueryIncludeCodePlaceholder *@
+        .AsNoTracking().ToListAsync();
+    }
+  }
+}
+

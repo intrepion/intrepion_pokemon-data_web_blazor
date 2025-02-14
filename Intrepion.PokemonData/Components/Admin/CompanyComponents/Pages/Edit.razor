@@ -1,0 +1,146 @@
+@page "/admin/company/edit/{CompanyId:guid}"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager Navigation
+@inject EditSuccess EditSuccessState
+
+<PageTitle>Company Edit</PageTitle>
+
+@if (Company is null && !Busy)
+{
+  <p>Could not find Company with id @CompanyId.</p>
+}
+else
+{
+  <CompanyForm Busy="Busy" 
+         Company="Company" 
+         DbCompany="DbCompany" 
+         IsAdd="false" 
+         CancelRequest="Cancel" 
+         ValidationResult="@(async (success) => await ValidationResultAsync(success))" />
+}
+
+@if (ConcurrencyError)
+{
+  <br />
+  <div class="alert alert-danger">
+    <p>
+      The Company details have changed since it was last loaded. The updated fields are highlighted in the form.
+      Please choose an option:
+    </p>
+    <p><b>Cancel</b> to lose your changes and keep the database version.</p>
+    <p><b>Submit</b> to force an update with your version.</p>
+  </div>
+}
+
+@if (Error)
+{
+  <br />
+  <div class="alert alert-danger">Failed to update the Company (@ErrorMessage).</div>
+}
+
+@code {
+  [Parameter]
+  public Guid CompanyId { get; set; }
+
+  private ApplicationDbContext? Context { get; set; }
+
+  private Company Company { get; set; } = new Company();
+
+  private Company DbCompany { get; set; } = new Company();
+
+  private bool Busy;
+
+  private bool Error;
+
+  private bool ConcurrencyError;
+
+  private string ErrorMessage = string.Empty;
+
+  protected override async Task OnInitializedAsync()
+  {
+    Busy = true;
+
+    try
+    {
+      Context = DbFactory.CreateDbContext();
+
+      if (Context is not null && Context.Companies is not null)
+      {
+        var company = await Context.Companies.SingleOrDefaultAsync(x => x.Id == CompanyId);
+
+        if (company is not null)
+        {
+          Company = company;
+        }
+      }
+    }
+    finally
+    {
+      Busy = false;
+    }
+  }
+
+  private async Task ValidationResultAsync(bool success)
+  {
+    if (Busy)
+    {
+      return;
+    }
+
+    if (!success)
+    {
+      Error = false;
+      ConcurrencyError = false;
+      return;
+    }
+
+    Busy = true;
+    try
+    {
+      if (Context is not null)
+      {
+        await Context.SaveChangesAsync();
+      }
+
+      EditSuccessState.Success = true;
+      Navigation.NavigateTo($"/admin/company/view/{Company.Id}");
+    }
+    catch (DbUpdateConcurrencyException dbex)
+    {
+      EditSuccessState.Success = false;
+
+      ConcurrencyError = true;
+
+      var dbValues = dbex.Entries[0].GetDatabaseValues();
+
+      if (dbValues is null)
+      {
+        Navigation.NavigateTo($"/admin/company/view/{Company.Id}");
+        return;
+      }
+
+      DbCompany = (Company)dbValues.ToObject();
+
+      dbex.Entries[0].OriginalValues.SetValues(dbValues);
+      Error = false;
+      Busy = false;
+    }
+    catch (Exception ex)
+    {
+      EditSuccessState.Success = false;
+      Error = true;
+      ErrorMessage = ex.Message;
+      Busy = false;
+    }
+  }
+
+  private void Cancel()
+  {
+    Busy = true;
+    Navigation.NavigateTo($"/admin/company");
+  }
+
+  public void Dispose() => Context?.Dispose();
+}

@@ -1,0 +1,144 @@
+@page "/admin/application-role/edit/{ApplicationRoleId:guid}"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager Navigation
+@inject EditSuccess EditSuccessState
+
+<PageTitle>Application Role Edit</PageTitle>
+
+@if (ApplicationRole is null && !Busy)
+{
+  <p>Could not find Application Role with id @ApplicationRoleId.</p>
+}
+else
+{
+  <ApplicationRoleForm Busy="Busy" 
+         ApplicationRole="ApplicationRole" 
+         DbApplicationRole="DbApplicationRole" 
+         IsAdd="false" 
+         CancelRequest="Cancel" 
+         ValidationResult="@(async (success) => await ValidationResultAsync(success))" />
+}
+@if (ConcurrencyError)
+{
+  <br />
+  <div class="alert alert-danger">
+    <p>
+      The Application Role details have changed since it was last loaded. The updated fields are highlighted in the form.
+      Please choose an option:
+    </p>
+    <p><b>Cancel</b> to lose your changes and keep the database version.</p>
+    <p><b>Submit</b> to force an update with your version.</p>
+  </div>
+}
+@if (Error)
+{
+  <br />
+  <div class="alert alert-danger">Failed to update the Application Role (@ErrorMessage).</div>
+}
+
+@code {
+  [Parameter]
+  public Guid ApplicationRoleId { get; set; }
+
+  private ApplicationDbContext? Context { get; set; }
+
+  private ApplicationRole ApplicationRole { get; set; } = new ApplicationRole();
+
+  private ApplicationRole DbApplicationRole { get; set; } = new ApplicationRole();
+
+  private bool Busy;
+
+  private bool Error;
+
+  private bool ConcurrencyError;
+
+  private string ErrorMessage = string.Empty;
+
+  protected override async Task OnInitializedAsync()
+  {
+    Busy = true;
+
+    try
+    {
+      Context = DbFactory.CreateDbContext();
+
+      if (Context is not null && Context.Roles is not null)
+      {
+        var applicationRole = await Context.Roles.SingleOrDefaultAsync(x => x.Id == ApplicationRoleId);
+
+        if (applicationRole is not null)
+        {
+          ApplicationRole = applicationRole;
+        }
+      }
+    }
+    finally
+    {
+      Busy = false;
+    }
+  }
+
+  private async Task ValidationResultAsync(bool success)
+  {
+    if (Busy)
+    {
+      return;
+    }
+
+    if (!success)
+    {
+      Error = false;
+      ConcurrencyError = false;
+      return;
+    }
+
+    Busy = true;
+    try
+    {
+      if (Context is not null)
+      {
+        await Context.SaveChangesAsync();
+      }
+
+      EditSuccessState.Success = true;
+      Navigation.NavigateTo($"/admin/application-role/view/{ApplicationRole.Id}");
+    }
+    catch (DbUpdateConcurrencyException dbex)
+    {
+      EditSuccessState.Success = false;
+
+      ConcurrencyError = true;
+
+      var dbValues = dbex.Entries[0].GetDatabaseValues();
+
+      if (dbValues is null)
+      {
+        Navigation.NavigateTo($"/admin/application-role/view/{ApplicationRole.Id}");
+        return;
+      }
+
+      DbApplicationRole = (ApplicationRole)dbValues.ToObject();
+
+      dbex.Entries[0].OriginalValues.SetValues(dbValues);
+      Error = false;
+      Busy = false;
+    }
+    catch (Exception ex)
+    {
+      EditSuccessState.Success = false;
+      Error = true;
+      ErrorMessage = ex.Message;
+      Busy = false;
+    }
+  }
+
+  private void Cancel()
+  {
+    Busy = true;
+    Navigation.NavigateTo($"/admin/application-role");
+  }
+
+  public void Dispose() => Context?.Dispose();
+}

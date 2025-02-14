@@ -1,0 +1,146 @@
+@page "/admin/game-console/edit/{GameConsoleId:guid}"
+@rendermode InteractiveServer
+@implements IDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager Navigation
+@inject EditSuccess EditSuccessState
+
+<PageTitle>Game Console Edit</PageTitle>
+
+@if (GameConsole is null && !Busy)
+{
+  <p>Could not find Game Console with id @GameConsoleId.</p>
+}
+else
+{
+  <GameConsoleForm Busy="Busy" 
+         GameConsole="GameConsole" 
+         DbGameConsole="DbGameConsole" 
+         IsAdd="false" 
+         CancelRequest="Cancel" 
+         ValidationResult="@(async (success) => await ValidationResultAsync(success))" />
+}
+
+@if (ConcurrencyError)
+{
+  <br />
+  <div class="alert alert-danger">
+    <p>
+      The Game Console details have changed since it was last loaded. The updated fields are highlighted in the form.
+      Please choose an option:
+    </p>
+    <p><b>Cancel</b> to lose your changes and keep the database version.</p>
+    <p><b>Submit</b> to force an update with your version.</p>
+  </div>
+}
+
+@if (Error)
+{
+  <br />
+  <div class="alert alert-danger">Failed to update the Game Console (@ErrorMessage).</div>
+}
+
+@code {
+  [Parameter]
+  public Guid GameConsoleId { get; set; }
+
+  private ApplicationDbContext? Context { get; set; }
+
+  private GameConsole GameConsole { get; set; } = new GameConsole();
+
+  private GameConsole DbGameConsole { get; set; } = new GameConsole();
+
+  private bool Busy;
+
+  private bool Error;
+
+  private bool ConcurrencyError;
+
+  private string ErrorMessage = string.Empty;
+
+  protected override async Task OnInitializedAsync()
+  {
+    Busy = true;
+
+    try
+    {
+      Context = DbFactory.CreateDbContext();
+
+      if (Context is not null && Context.GameConsoles is not null)
+      {
+        var gameConsole = await Context.GameConsoles.SingleOrDefaultAsync(x => x.Id == GameConsoleId);
+
+        if (gameConsole is not null)
+        {
+          GameConsole = gameConsole;
+        }
+      }
+    }
+    finally
+    {
+      Busy = false;
+    }
+  }
+
+  private async Task ValidationResultAsync(bool success)
+  {
+    if (Busy)
+    {
+      return;
+    }
+
+    if (!success)
+    {
+      Error = false;
+      ConcurrencyError = false;
+      return;
+    }
+
+    Busy = true;
+    try
+    {
+      if (Context is not null)
+      {
+        await Context.SaveChangesAsync();
+      }
+
+      EditSuccessState.Success = true;
+      Navigation.NavigateTo($"/admin/game-console/view/{GameConsole.Id}");
+    }
+    catch (DbUpdateConcurrencyException dbex)
+    {
+      EditSuccessState.Success = false;
+
+      ConcurrencyError = true;
+
+      var dbValues = dbex.Entries[0].GetDatabaseValues();
+
+      if (dbValues is null)
+      {
+        Navigation.NavigateTo($"/admin/game-console/view/{GameConsole.Id}");
+        return;
+      }
+
+      DbGameConsole = (GameConsole)dbValues.ToObject();
+
+      dbex.Entries[0].OriginalValues.SetValues(dbValues);
+      Error = false;
+      Busy = false;
+    }
+    catch (Exception ex)
+    {
+      EditSuccessState.Success = false;
+      Error = true;
+      ErrorMessage = ex.Message;
+      Busy = false;
+    }
+  }
+
+  private void Cancel()
+  {
+    Busy = true;
+    Navigation.NavigateTo($"/admin/game-console");
+  }
+
+  public void Dispose() => Context?.Dispose();
+}

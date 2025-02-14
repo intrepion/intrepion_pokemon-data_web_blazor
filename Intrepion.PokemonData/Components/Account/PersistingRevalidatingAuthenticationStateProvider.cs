@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Security.Claims;
+using Intrepion.PokemonData.BusinessLogic.Entities;
 using Intrepion.PokemonData.Client;
-using Intrepion.PokemonData.Data;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;

@@ -1,0 +1,22 @@
+﻿@inherits LayoutComponentBase
+
+<Header />
+<AuthorizeView>
+  <Authorized>
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-2 col-md-2 col-sm-3">
+          <SideBar />
+        </div>
+        <main class="col">
+          @Body
+        </main>
+      </div>
+    </div>
+  </Authorized>
+  <NotAuthorized>
+    <main class="">
+      @Body
+    </main>
+  </NotAuthorized>
+</AuthorizeView>

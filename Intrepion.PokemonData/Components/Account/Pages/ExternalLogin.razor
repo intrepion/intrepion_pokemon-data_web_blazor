@@ -6,7 +6,7 @@
 @using System.Text.Encodings.Web
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
-@using Intrepion.PokemonData.Data
+@using Intrepion.PokemonData.BusinessLogic.Entities
 
 @inject SignInManager<ApplicationUser> SignInManager
 @inject UserManager<ApplicationUser> UserManager
@@ -119,7 +119,7 @@
         }
 
         // If the user does not have an account, then ask the user to create an account.
-        if (externalLoginInfo.Principal.HasClaim(c => c.Type == ClaimTypes.Email))
+        if (externalLoginInfo.Principal.HasClaim(x => x.Type == ClaimTypes.Email))
         {
             Input.Email = externalLoginInfo.Principal.FindFirstValue(ClaimTypes.Email) ?? "";
         }

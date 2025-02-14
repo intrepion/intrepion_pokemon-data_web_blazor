@@ -1,0 +1,78 @@
+@page "/admin/application-user"
+@rendermode InteractiveServer
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Application User Home</PageTitle>
+
+<h1>Application User Home</h1>
+<h6><a href="/admin/application-user/add">Create New</a></h6>
+
+<div class="container-fluid">
+  <table class="table table-hover table-primary table-striped">
+    <thead>
+      <tr>
+        <th>Actions</th>
+        <th>Email</th>
+        <th>Email Confirmed?</th>
+        <th>Phone Number</th>
+        <th>User Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      @if (ApplicationUsers is not null)
+      {
+        @foreach (var applicationUser in ApplicationUsers)
+        {
+          <tr>
+            <td>
+              <div class="btn-group">
+                <a class="btn btn-primary btn-sm btn-info" href="/admin/application-user/view/@applicationUser.Id" title="View">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a class="btn btn-primary btn-sm" href="/admin/application-user/edit/@applicationUser.Id" title="Edit">
+                  <i class="bi bi-pencil"></i>
+                </a>
+              </div>
+            </td>
+            <td>@applicationUser.Email</td>
+            <td>
+              @if (applicationUser.EmailConfirmed)
+              {
+                <span class="badge bg-success">Yes</span>
+              }
+              else
+              {
+                <span class="badge bg-warning text-dark">No</span>
+              }
+            </td>
+            <td>@applicationUser.PhoneNumber</td>
+            <td>@applicationUser.UserName</td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+@code {
+  private ICollection<ApplicationUser>? ApplicationUsers { get; set; }
+
+  protected override async Task OnParametersSetAsync()
+  {
+    await ReloadAsync();
+  }
+
+  private async Task ReloadAsync()
+  {
+    ApplicationUsers = new List<ApplicationUser>();
+
+    using var context = DbFactory.CreateDbContext();
+    var query = context.Users?.AsQueryable();
+
+    if (query is not null)
+    {
+      ApplicationUsers = await query.AsNoTracking().ToListAsync();
+    }
+  }
+}

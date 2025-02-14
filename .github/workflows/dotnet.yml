@@ -1,0 +1,46 @@
+# This workflow will build a .NET project
+# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-net
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+      - name: Verify formatting
+        run: dotnet format --verify-no-changes
+      - name: Restore dependencies
+        run: dotnet restore
+      - name: Build
+        run: dotnet build --no-restore
+      - name: Test Units
+        run: dotnet test --no-build --verbosity normal Intrepion.PokemonData.BusinessLogic.UnitTests
+      - name: Test Server Components
+        run: dotnet test --no-build --verbosity normal Intrepion.PokemonData.Server.ComponentTests
+      - name: Test Server Controllers
+        run: dotnet test --no-build --verbosity normal Intrepion.PokemonData.Server.ControllerTests
+      - name: Test Client Components
+        run: dotnet test --no-build --verbosity normal Intrepion.PokemonData.Client.ComponentTests
+      - name: Test Shared Components
+        run: dotnet test --no-build --verbosity normal Intrepion.PokemonData.Shared.ComponentTests
+      - name: Run app in background
+        run: dotnet run --project Intrepion.PokemonData &
+      - name: Install powershell tools
+        run: dotnet tool install --global PowerShell
+      - name: Install playwright dependencies
+        run: cd Intrepion.PokemonData.AcceptanceTests && pwsh bin/Debug/net8.0/playwright.ps1 install --with-deps
+      - name: Test Acceptances
+        run: dotnet test --no-build --verbosity normal Intrepion.PokemonData.AcceptanceTests
+name: .NET
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]

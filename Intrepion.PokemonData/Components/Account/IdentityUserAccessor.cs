@@ -1,4 +1,4 @@
-﻿using Intrepion.PokemonData.Data;
+﻿using Intrepion.PokemonData.BusinessLogic.Entities;
 using Microsoft.AspNetCore.Identity;
 
 namespace Intrepion.PokemonData.Components.Account;
