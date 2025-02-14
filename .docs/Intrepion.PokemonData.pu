@@ -1,0 +1,30 @@
+@startuml
+
+entity Company {
+    Id : Guid
+    --
+    GameConsoles : ICollection<GameConsole>
+    ' CompanyKeyCodePlaceholder
+    --
+    IsTest : bool
+    Name : string
+    ' CompanyPropertyCodePlaceholder
+}
+
+entity GameConsole {
+    Id : Guid
+    --
+    Company : Company
+    ' GameConsoleKeyCodePlaceholder
+    --
+    IsTest : bool
+    Name : string
+    ' GameConsolePropertyCodePlaceholder
+}
+
+' EntityCodePlaceholder
+
+GameConsole }o--o| Company
+' RelationshipCodePlaceholder
+
+@enduml
