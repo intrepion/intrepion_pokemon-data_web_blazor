@@ -1,0 +1,115 @@
+{
+  "entities": [
+    {
+      "keys": [
+        {
+          "key": "NormalizedName",
+          "ordering": 1
+        }
+      ],
+      "names": {
+        "entity": "Company",
+        "human": "Company",
+        "plural": "Companies",
+        "table": "Companies",
+        "url": "company"
+      },
+      "properties": [
+        {
+          "foreign": {
+            "display": [
+              {
+                "ordering": 1,
+                "property": "Name"
+              }
+            ],
+            "entity": "Console"
+          },
+          "names": {
+            "human": "Consoles",
+            "property": "Consoles"
+          },
+          "type": "oneToMany"
+        },
+        {
+          "names": {
+            "human": "Is Test?",
+            "property": "IsTest"
+          },
+          "type": "boolean"
+        },
+        {
+          "names": {
+            "human": "Name",
+            "property": "Name"
+          },
+          "normalized": true,
+          "required": true,
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "keys": [
+        {
+          "key": "NormalizedName",
+          "ordering": 1
+        }
+      ],
+      "names": {
+        "entity": "Console",
+        "human": "Console",
+        "plural": "Consoles",
+        "table": "Consoles",
+        "url": "console"
+      },
+      "properties": [
+        {
+          "foreign": {
+            "display": [
+              {
+                "ordering": 1,
+                "property": "Name"
+              }
+            ],
+            "entity": "Company",
+            "keys": [
+              {
+                "key": "NormalizedName",
+                "ordering": 1
+              }
+            ],
+            "property": "Consoles",
+            "table": "Companies"
+          },
+          "names": {
+            "human": "Company",
+            "property": "Company"
+          },
+          "type": "manyToOne"
+        },
+        {
+          "names": {
+            "human": "Is Test?",
+            "property": "IsTest"
+          },
+          "type": "boolean"
+        },
+        {
+          "names": {
+            "human": "Name",
+            "property": "Name"
+          },
+          "normalized": true,
+          "required": true,
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "names": {
+    "human": "Pokémon Data",
+    "namespace": "Intrepion.PokemonData"
+  },
+  "version": "0.1.0"
+}
