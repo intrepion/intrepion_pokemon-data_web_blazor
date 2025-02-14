@@ -51,7 +51,7 @@ public static class CompanyImporter
             // ManyToOneCodePlaceholder
 
             if (true
-                // NullCheckCodePlaceholder
+            // NullCheckCodePlaceholder
             )
             {
                 var company = new Company

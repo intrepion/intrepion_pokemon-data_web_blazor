@@ -57,7 +57,7 @@ public static class GameConsoleImporter
             // ManyToOneCodePlaceholder
 
             if (true
-                // NullCheckCodePlaceholder
+            // NullCheckCodePlaceholder
             )
             {
                 var gameConsole = new GameConsole

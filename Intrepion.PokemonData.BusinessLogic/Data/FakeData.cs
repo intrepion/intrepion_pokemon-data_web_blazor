@@ -1,5 +1,5 @@
-﻿using Intrepion.PokemonData.BusinessLogic.Entities;
-using Bogus;
+﻿using Bogus;
+using Intrepion.PokemonData.BusinessLogic.Entities;
 
 namespace Intrepion.PokemonData.BusinessLogic.Data;
 
